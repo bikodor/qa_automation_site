@@ -1,0 +1,8 @@
+{% load static %}<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{% block title %}Practice — QA workspace{% endblock %}</title><link rel="stylesheet" href="{% static 'app.css' %}"><script src="{% static 'app.js' %}" defer></script></head>
+<body>
+<header><nav class="shell"><a class="brand" href="{% url 'home' %}"><span class="brand-icon">p</span> practice<span class="version"> / 01</span></a><div class="nav-links"><a href="{% url 'tasks' %}" data-testid="nav-tasks">My tasks</a>{% if user.is_authenticated %}<span class="username" data-testid="current-user">{{ user.username }}</span><form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="button small secondary" data-testid="logout">Log out</button></form>{% else %}<a href="{% url 'login' %}" data-testid="nav-login">Log in</a><a class="button small" href="{% url 'register' %}" data-testid="nav-register">Create account</a>{% endif %}</div></nav></header>
+<main class="shell">{% for message in messages %}<div class="notice" role="status" data-testid="notification">{{ message }}</div>{% endfor %}{% block content %}{% endblock %}</main>
+<footer class="shell"><span>Practice · QA training workspace</span><span>Small steps. Big possibilities.</span></footer>
+</body></html>
