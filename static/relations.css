@@ -1,0 +1,18 @@
+.relation-layout{display:grid;grid-template-columns:minmax(0,2fr) minmax(280px,1fr);gap:28px;align-items:start}
+.project-grid{display:grid;gap:14px}
+.project-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:22px}
+.project-card h2,.compact-form h2{margin:0 0 8px}
+.project-card p{color:var(--muted);margin:0 0 18px;overflow-wrap:anywhere}
+.project-metrics{display:flex;gap:22px;color:var(--muted);font-size:12px;margin-bottom:18px}
+.project-metrics strong{color:var(--ink);font-size:18px;margin-right:4px}
+.compact-form{margin:0 0 18px}.compact-form .field{margin-bottom:14px}
+.label-list{display:flex;flex-wrap:wrap;gap:10px}
+.label-item{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:12px}
+.label-item form{margin:0}
+.label-chip{display:inline-block;padding:3px 8px;border-radius:999px;font-size:10px;font-weight:700;margin:2px 4px 2px 0}
+.label-chip.blue{background:#e7edff;color:#3c59bb}.label-chip.green{background:#e1f3eb;color:#21775a}.label-chip.amber{background:#fff1d2;color:#88691d}.label-chip.red{background:#ffe5e8;color:#a43a4b}.label-chip.purple{background:#f0e7ff;color:#7046a2}
+.row-labels{display:block;margin-top:3px}.task-name .row-labels .label-chip{font-size:9px}
+.reset{border:0;background:transparent;color:var(--blue);cursor:pointer}
+.field select[multiple]{min-height:112px;padding:7px}.filters{align-items:end}.filters>div{min-width:120px}
+@media(max-width:850px){.relation-layout{grid-template-columns:1fr}.project-metrics{flex-wrap:wrap}}
+@media(max-width:620px){.label-item{width:100%;flex-wrap:wrap}.project-metrics{gap:12px}.nav-links{overflow-x:auto}.relation-layout aside{order:-1}}

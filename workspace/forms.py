@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.models import User
-from .models import Task
+from .models import Label, Project, Task
 
 
 class TestableFormMixin:
@@ -25,10 +25,52 @@ class RegisterForm(TestableFormMixin, UserCreationForm):
 
 
 class TaskForm(TestableFormMixin, forms.ModelForm):
+    def __init__(self, *args, owner=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['project'].queryset = Project.objects.filter(owner=owner) if owner else Project.objects.none()
+        self.fields['labels'].queryset = Label.objects.filter(owner=owner) if owner else Label.objects.none()
+
     class Meta:
         model = Task
-        fields = ['title', 'description', 'status', 'priority', 'due_date']
+        fields = ['title', 'description', 'project', 'labels', 'status', 'priority', 'due_date']
         widgets = {
             'description': forms.Textarea(attrs={'rows': 4}),
             'due_date': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
         }
+
+
+class ProjectForm(TestableFormMixin, forms.ModelForm):
+    def __init__(self, *args, owner=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if owner:
+            self.instance.owner = owner
+
+    def clean_name(self):
+        name = self.cleaned_data['name']
+        duplicate = Project.objects.filter(owner=self.instance.owner, name=name).exclude(pk=self.instance.pk)
+        if duplicate.exists():
+            raise forms.ValidationError('You already have a project with this name.')
+        return name
+
+    class Meta:
+        model = Project
+        fields = ['name', 'description']
+        widgets = {'description': forms.Textarea(attrs={'rows': 3})}
+
+
+class LabelForm(TestableFormMixin, forms.ModelForm):
+    def __init__(self, *args, owner=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if owner:
+            self.instance.owner = owner
+
+    def clean_name(self):
+        name = self.cleaned_data['name']
+        duplicate = Label.objects.filter(owner=self.instance.owner, name=name).exclude(pk=self.instance.pk)
+        if duplicate.exists():
+            raise forms.ValidationError('You already have a label with this name.')
+        return name
+
+    class Meta:
+        model = Label
+        fields = ['name', 'color']

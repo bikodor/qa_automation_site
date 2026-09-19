@@ -3,11 +3,11 @@ from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db import IntegrityError
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
-from .forms import RegisterForm, TaskForm
-from .models import Task
+from .forms import LabelForm, ProjectForm, RegisterForm, TaskForm
+from .models import Label, Project, Task
 
 
 def home(request):
@@ -35,10 +35,12 @@ def register(request):
 @login_required
 def task_list(request):
     all_tasks = Task.objects.filter(owner=request.user)
-    tasks = all_tasks
+    tasks = all_tasks.select_related('project').prefetch_related('labels')
     query = request.GET.get('q', '').strip()
     status = request.GET.get('status', '')
     priority = request.GET.get('priority', '')
+    project_id = request.GET.get('project_id', '')
+    label_id = request.GET.get('label_id', '')
     sort = request.GET.get('sort', 'newest')
     if query:
         tasks = tasks.filter(Q(title__icontains=query) | Q(description__icontains=query))
@@ -46,6 +48,10 @@ def task_list(request):
         tasks = tasks.filter(status=status)
     if priority in Task.Priority.values:
         tasks = tasks.filter(priority=priority)
+    if project_id.isdigit():
+        tasks = tasks.filter(project_id=project_id, project__owner=request.user)
+    if label_id.isdigit():
+        tasks = tasks.filter(labels__id=label_id, labels__owner=request.user).distinct()
     ordering = {'newest': ('-created_at', '-pk'), 'oldest': ('created_at', 'pk'), 'title': ('title', 'pk')}
     if sort not in ordering:
         sort = 'newest'
@@ -56,7 +62,9 @@ def task_list(request):
         'page_obj': Paginator(tasks, 6).get_page(request.GET.get('page')),
         'total': all_tasks.count(), 'active': all_tasks.exclude(status='done').count(),
         'done': all_tasks.filter(status='done').count(), 'q': query, 'status': status,
-        'priority': priority, 'sort': sort, 'statuses': Task.Status.choices,
+        'priority': priority, 'project_id': project_id, 'label_id': label_id, 'sort': sort,
+        'projects': Project.objects.filter(owner=request.user), 'labels': Label.objects.filter(owner=request.user),
+        'statuses': Task.Status.choices,
         'priorities': Task.Priority.choices, 'params': params.urlencode(),
     })
 
@@ -64,11 +72,12 @@ def task_list(request):
 @login_required
 def task_form(request, pk=None):
     task = get_object_or_404(Task, pk=pk, owner=request.user) if pk else None
-    form = TaskForm(request.POST if request.method == 'POST' else None, instance=task)
+    form = TaskForm(request.POST if request.method == 'POST' else None, instance=task, owner=request.user)
     if request.method == 'POST' and form.is_valid():
         task = form.save(commit=False)
         task.owner = request.user
         task.save()
+        form.save_m2m()
         messages.success(request, 'Task saved.' if pk else 'Task created.')
         return redirect('task-detail', pk=task.pk)
     return render(request, 'form.html', {'form': form, 'title': 'Edit task' if pk else 'New task', 'subtitle': 'Define the next step.', 'submit': 'Save', 'kind': 'task'})
@@ -85,3 +94,45 @@ def task_delete(request, pk):
     get_object_or_404(Task, pk=pk, owner=request.user).delete()
     messages.success(request, 'Task deleted.')
     return redirect('tasks')
+
+
+@login_required
+def project_workspace(request):
+    action = request.POST.get('action') if request.method == 'POST' else None
+    project_form = ProjectForm(request.POST if action == 'project' else None, owner=request.user)
+    label_form = LabelForm(request.POST if action == 'label' else None, owner=request.user)
+    if request.method == 'POST':
+        form = project_form if action == 'project' else label_form
+        if form.is_valid():
+            item = form.save(commit=False)
+            item.owner = request.user
+            item.save()
+            messages.success(request, 'Project created.' if action == 'project' else 'Label created.')
+            return redirect('projects')
+    projects = Project.objects.filter(owner=request.user).annotate(
+        task_count=Count('tasks', distinct=True),
+        done_count=Count('tasks', filter=Q(tasks__status=Task.Status.DONE), distinct=True),
+        label_count=Count('tasks__labels', distinct=True),
+    )
+    labels = Label.objects.filter(owner=request.user).annotate(task_count=Count('tasks', distinct=True))
+    return render(request, 'projects.html', {
+        'projects': projects, 'labels': labels,
+        'project_form': project_form, 'label_form': label_form,
+        'unassigned_count': Task.objects.filter(owner=request.user, project=None).count(),
+    })
+
+
+@login_required
+@require_POST
+def project_delete(request, pk):
+    get_object_or_404(Project, pk=pk, owner=request.user).delete()
+    messages.success(request, 'Project deleted. Its tasks are now unassigned.')
+    return redirect('projects')
+
+
+@login_required
+@require_POST
+def label_delete(request, pk):
+    get_object_or_404(Label, pk=pk, owner=request.user).delete()
+    messages.success(request, 'Label deleted.')
+    return redirect('projects')
