@@ -19,4 +19,11 @@ The site includes registration/login, task CRUD, statuses, priorities, due dates
 
 The interface uses JSON API calls for authentication, task operations, projects, labels, filters and pagination. See [API documentation](docs/API.md) and [JOIN examples](docs/JOIN_EXAMPLES.md). Stable `data-testid` attributes are available throughout the UI.
 
+## Specifications (English)
+
+- [Functional specification](docs/FUNCTIONAL_SPECIFICATION.md): pages, workflows, validation, access control, acceptance criteria and current limitations.
+- [Complete API specification](docs/API.md): every endpoint and method, request examples, response schemas and errors.
+- [Database specification](docs/DATABASE.md): tables, columns, relationships, constraints, migrations and demo fixtures.
+- [JOIN examples](docs/JOIN_EXAMPLES.md): SQL scenarios for relational checks.
+
 The local settings use SQLite, English locale, DEBUG mode, and a development secret key. This is a test playground, not a production deployment.
