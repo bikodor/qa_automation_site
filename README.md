@@ -21,6 +21,8 @@ The interface uses JSON API calls for authentication, task operations, projects,
 
 ## Specifications (English)
 
+- [Registration specification](<docs/separated logic/REGISTRATION.md>): registration form, API, validation and acceptance scenarios.
+- [Login specification](<docs/separated logic/LOGIN.md>): login form, API, validation and acceptance scenarios.
 - [Functional specification](docs/FUNCTIONAL_SPECIFICATION.md): pages, workflows, validation, access control, acceptance criteria and current limitations.
 - [Complete API specification](docs/API.md): every endpoint and method, request examples, response schemas and errors.
 - [Database specification](docs/DATABASE.md): tables, columns, relationships, constraints, migrations and demo fixtures.
